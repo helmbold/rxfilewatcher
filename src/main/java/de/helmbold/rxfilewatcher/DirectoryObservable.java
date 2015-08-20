@@ -1,8 +1,7 @@
-package de.helmbold.filewatcher;
+package de.helmbold.rxfilewatcher;
 
 import rx.Observable;
 import rx.Subscriber;
-import rx.schedulers.Schedulers;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -10,7 +9,6 @@ import java.nio.file.WatchEvent.Kind;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executors;
 
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardWatchEventKinds.*;

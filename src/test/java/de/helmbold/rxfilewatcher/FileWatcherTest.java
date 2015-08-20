@@ -1,4 +1,4 @@
-package de.helmbold.filewatcher;
+package de.helmbold.rxfilewatcher;
 
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.Test;
