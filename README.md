@@ -7,8 +7,8 @@ The following example creates an observable that watches the given directory and
 
 ```java
 DirectoryObservable
-    .createRecursive(Paths.get("some/dir/"))
-    .subscribe(event -> System.out.println(event));
+  .createRecursive(Paths.get("some/dir/"))
+  .subscribe(event -> System.out.println(event));
 ```
         
 The example above uses a scheduler 
@@ -16,9 +16,9 @@ The example above uses a scheduler
 To watch only the top-level directory, you call `createNonRecursive` instead of `createRecursive`:
 
 ```java
-    DirectoryObservable
-        .createNonRecursive(Paths.get("some/dir/"))
-        .subscribe(event -> System.out.println(event));
+DirectoryObservable
+  .createNonRecursive(Paths.get("some/dir/"))
+  .subscribe(event -> System.out.println(event));
 ```
 
 That's it!
