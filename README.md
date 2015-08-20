@@ -1,4 +1,4 @@
-**RxFileWatcher** allows you to observe directories (recursiveley or not) for file system events with a [RxJava](https://github.com/ReactiveX/RxJava) observable. It is based on the [JDK WatchService](https://docs.oracle.com/javase/8/docs/api/java/nio/file/WatchService.html), but it is much more convenient.
+**RxFileWatcher** allows you to observe directories (recursively or not) for file system events with a [RxJava](https://github.com/ReactiveX/RxJava) observable. It is based on the [JDK WatchService](https://docs.oracle.com/javase/8/docs/api/java/nio/file/WatchService.html), but it is much more convenient.
 
 Usage
 -------
