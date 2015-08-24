@@ -9,39 +9,48 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class FileWatcherTest {
 
   @Test
-  public void shouldWatchDirectoryRecursively() throws IOException, InterruptedException {
+  public void shouldWatchDirectoryRecursively() throws IOException {
+
     final Path directory = Files.createTempDirectory(".");
     final Observable<WatchEvent<?>> observable = DirectoryObservable.createRecursive(directory);
     final List<WatchEvent<?>> events = new LinkedList<>();
 
     observable.subscribeOn(Schedulers.io()).subscribe(events::add);
 
-    new Thread() {
-      @Override
-      public void run() {
-        try {
-          final Path newDir = directory.resolve(Paths.get("a"));
-          Files.createDirectory(newDir);
-          final Path file = newDir.resolve("b");
-          Files.createFile(file);
-        } catch (final IOException _) {
-          throw new RuntimeException();
-        }
+    final CompletableFuture<Void> fileModificationFuture = CompletableFuture.runAsync(() -> {
+      try {
+        final Path newDir = directory.resolve(Paths.get("a"));
+        Files.createDirectory(newDir);
+        final Path file = newDir.resolve("b");
+        Thread.sleep(10); // needed because the registration of the watcher needs some time
+        Files.createFile(file);
+      } catch (final IOException ex) {
+        throw new RuntimeException(ex);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
       }
-    }.start();
+    });
 
+    fileModificationFuture.join();
+    assertThat(events).hasSize(2);
+    final WatchEvent<?> firstEvent = events.get(0);
+    final WatchEvent<?> secondEvent = events.get(1);
+    assertThat(firstEvent.kind()).isEqualTo(StandardWatchEventKinds.ENTRY_CREATE);
+    assertThat(firstEvent.context().toString()).isEqualTo("a");
+    assertThat(secondEvent.kind()).isEqualTo(StandardWatchEventKinds.ENTRY_CREATE);
+    assertThat(secondEvent.context().toString()).isEqualTo("b");
 
-    events.stream().forEach(e -> System.out.println(e.kind()));
-    assertThat(events).hasSize(3);
     FileUtils.deleteDirectory(directory.toFile());
   }
 
@@ -53,21 +62,23 @@ public final class FileWatcherTest {
 
     observable.subscribeOn(Schedulers.io()).subscribe(events::add);
 
-    new Thread() {
-      @Override
-      public void run() {
-        try {
-          final Path newDir = directory.resolve(Paths.get("a"));
-          Files.createDirectory(newDir);
-          final Path file = newDir.resolve("b");
-          Files.createFile(file);
-        } catch (final IOException _) {
-          throw new RuntimeException();
-        }
+    final CompletableFuture<Void> fileModificationFuture = CompletableFuture.runAsync(() -> {
+      try {
+        final Path newDir = directory.resolve(Paths.get("a"));
+        Files.createDirectory(newDir);
+        final Path file = newDir.resolve("b");
+        Files.createFile(file);
+      } catch (final IOException ex) {
+        throw new RuntimeException(ex);
       }
-    }.start();
+    });
 
-    assertThat(events).hasSize(2);
+    fileModificationFuture.join();
+    assertThat(events).hasSize(1);
+    final WatchEvent<?> event = events.get(0);
+    assertThat(event.kind()).isEqualTo(StandardWatchEventKinds.ENTRY_CREATE);
+    assertThat(event.context().toString()).isEqualTo("a");
+
     FileUtils.deleteDirectory(directory.toFile());
   }
 
