@@ -41,7 +41,9 @@ public final class DirectoryObservable {
 
   private static class ObservableFactory {
 
+    // TODO use file system of the given path
     private final WatchService watcher = FileSystems.getDefault().newWatchService();
+
     private final Map<WatchKey, Path> directoriesByKey = new HashMap<>();
     private final boolean recursive;
 
@@ -56,13 +58,15 @@ public final class DirectoryObservable {
 
     private Observable<WatchEvent<?>> create() {
       return Observable.create(subscriber -> {
+        boolean errorFree = true;
         while (true) {
           final WatchKey key;
           try {
             key = watcher.take();
           } catch (InterruptedException x) {
             subscriber.onError(x);
-            continue;
+            errorFree = false;
+            break;
           }
           final Path dir = directoriesByKey.get(key);
           for (final WatchEvent<?> event : key.pollEvents()) {
@@ -79,7 +83,9 @@ public final class DirectoryObservable {
             }
           }
         }
-        subscriber.onCompleted();
+        if (errorFree) {
+          subscriber.onCompleted();
+        }
       });
     }
 
@@ -110,8 +116,8 @@ public final class DirectoryObservable {
       final Kind<?> kind = event.kind();
       if (recursive && kind.equals(ENTRY_CREATE)) {
         // Context for directory entry event is the file name of entry
-        @SuppressWarnings("unchecked") final
-        WatchEvent<Path> eventWithPath = (WatchEvent<Path>) event;
+        @SuppressWarnings("unchecked")
+        final WatchEvent<Path> eventWithPath = (WatchEvent<Path>) event;
         final Path name = eventWithPath.context();
         final Path child = dir.resolve(name);
         try {
