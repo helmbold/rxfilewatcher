@@ -7,7 +7,7 @@ The following example creates an observable that watches the given directory and
 
 ```java
 DirectoryObservable
-  .createRecursive(Paths.get("some/dir/"))
+  .createRecursive(Paths.get("some/directory/"))
   .subscribe(event -> System.out.println(event));
 ```
     
@@ -15,7 +15,7 @@ To watch only the top-level directory, you call `createNonRecursive` instead of 
 
 ```java
 DirectoryObservable
-  .createNonRecursive(Paths.get("some/dir/"))
+  .createNonRecursive(Paths.get("some/directory/"))
   .subscribe(event -> System.out.println(event));
 ```
 

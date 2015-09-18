@@ -45,26 +45,33 @@ public final class DirectoryObservable {
     private final WatchService watcher = FileSystems.getDefault().newWatchService();
 
     private final Map<WatchKey, Path> directoriesByKey = new HashMap<>();
+    private final Path directory;
     private final boolean recursive;
 
-    private ObservableFactory(final Path dir, final boolean recursive) throws IOException {
+    private ObservableFactory(final Path directory, final boolean recursive) throws IOException {
+      this.directory = directory;
       this.recursive = recursive;
-      if (recursive) {
-        registerAll(dir);
-      } else {
-        register(dir);
-      }
     }
 
     private Observable<WatchEvent<?>> create() {
       return Observable.create(subscriber -> {
         boolean errorFree = true;
-        while (true) {
+        try {
+          if (recursive) {
+            registerAll(directory);
+          } else {
+            register(directory);
+          }
+        } catch (IOException exception) {
+          subscriber.onError(exception);
+          errorFree = false;
+        }
+        while (errorFree) {
           final WatchKey key;
           try {
             key = watcher.take();
-          } catch (InterruptedException x) {
-            subscriber.onError(x);
+          } catch (InterruptedException exception) {
+            subscriber.onError(exception);
             errorFree = false;
             break;
           }

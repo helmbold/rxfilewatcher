@@ -20,13 +20,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 public final class FileWatcherTest {
 
   @Test
-  public void shouldWatchDirectoryRecursively() throws IOException {
+  public void shouldWatchDirectoryRecursively() throws IOException, InterruptedException {
 
     final Path directory = Files.createTempDirectory(".");
     final Observable<WatchEvent<?>> observable = DirectoryObservable.createRecursive(directory);
     final List<WatchEvent<?>> events = new LinkedList<>();
 
     observable.subscribeOn(Schedulers.io()).subscribe(events::add);
+
+    Thread.sleep(10); // needed because the registration of the watcher needs some time
 
     final CompletableFuture<Void> fileModificationFuture = CompletableFuture.runAsync(() -> {
       try {
