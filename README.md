@@ -3,19 +3,19 @@
 Usage
 -------
 
-The following example creates an observable that watches the given directory and all its subdirectories for file system events. Directories which are created later are watched, too.  Each event will be emitted as a [WatchEvent](https://docs.oracle.com/javase/8/docs/api/java/nio/file/WatchEvent.html) and will be printed.
+The following example creates an observable that watches the given directory and all its subdirectories for file system events. Directories which are created later are watched, too. Each event will be emitted as a [WatchEvent](https://docs.oracle.com/javase/8/docs/api/java/nio/file/WatchEvent.html) and will be printed.
 
 ```java
 DirectoryObservable
-  .createRecursive(Paths.get("some/directory/"))
+  .watchRecursive(Paths.get("some/directory/"))
   .subscribe(event -> System.out.println(event));
 ```
     
-To watch only the top-level directory, you call `createNonRecursive` instead of `createRecursive`:
+To watch only the top-level directory, you call `watchNonRecursive` instead of `watchRecursive`:
 
 ```java
 DirectoryObservable
-  .createNonRecursive(Paths.get("some/directory/"))
+  .watchNonRecursive(Paths.get("some/directory/"))
   .subscribe(event -> System.out.println(event));
 ```
 

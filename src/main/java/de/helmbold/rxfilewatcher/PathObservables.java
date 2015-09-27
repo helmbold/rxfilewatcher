@@ -13,30 +13,32 @@ import java.util.Map;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardWatchEventKinds.*;
 
-public final class DirectoryObservable {
+public final class PathObservables {
 
-  private DirectoryObservable() {
+  private PathObservables() {
   }
 
   /**
-   * Creates an observable that watches the given directory and all its subdirectories. It doesen't
-   * matter when a subdirectory is created.
-   * @param dir Root directory to be watched
+   * Creates an observable that watches the given directory and all its subdirectories. Directories
+   * that are created after subscription are watched, too.
+   * @param path Root directory to be watched
    * @return Observable that emits an event for each filesystem event.
    * @throws IOException
    */
-  public static Observable<WatchEvent<?>> createRecursive(final Path dir) throws IOException {
-    return new ObservableFactory(dir, true).create();
+  public static Observable<WatchEvent<?>> watchRecursive(final Path path) throws IOException {
+    final boolean recursive = true;
+    return new ObservableFactory(path, recursive).create();
   }
 
   /**
-   * Creates an observable that watches the given directory but not its subdirectories.
-   * @param dir Directory to be watched
+   * Creates an observable that watches the given path but not its subdirectories.
+   * @param path Path to be watched
    * @return Observable that emits an event for each filesystem event.
    * @throws IOException
    */
-  public static Observable<WatchEvent<?>> createNonRecursive(final Path dir) throws IOException {
-    return new ObservableFactory(dir, false).create();
+  public static Observable<WatchEvent<?>> watchNonRecursive(final Path path) throws IOException {
+    final boolean recursive = false;
+    return new ObservableFactory(path, recursive).create();
   }
 
   private static class ObservableFactory {
@@ -46,10 +48,10 @@ public final class DirectoryObservable {
     private final Path directory;
     private final boolean recursive;
 
-    private ObservableFactory(final Path directory, final boolean recursive) throws IOException {
-      final FileSystem fileSystem = directory.getFileSystem();
+    private ObservableFactory(final Path path, final boolean recursive) throws IOException {
+      final FileSystem fileSystem = path.getFileSystem();
       watcher = fileSystem.newWatchService();
-      this.directory = directory;
+      directory = path;
       this.recursive = recursive;
     }
 

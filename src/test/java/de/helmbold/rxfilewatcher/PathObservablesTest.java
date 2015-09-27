@@ -17,13 +17,13 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public final class FileWatcherTest {
+public final class PathObservablesTest {
 
   @Test
   public void shouldWatchDirectoryRecursively() throws IOException, InterruptedException {
 
     final Path directory = Files.createTempDirectory(".");
-    final Observable<WatchEvent<?>> observable = DirectoryObservable.createRecursive(directory);
+    final Observable<WatchEvent<?>> observable = PathObservables.watchRecursive(directory);
     final List<WatchEvent<?>> events = new LinkedList<>();
 
     observable.subscribeOn(Schedulers.io()).subscribe(events::add);
@@ -59,7 +59,7 @@ public final class FileWatcherTest {
   @Test
   public void shouldWatchDirectoryNonRecursively() throws IOException {
     final Path directory = Files.createTempDirectory(".");
-    final Observable<WatchEvent<?>> observable = DirectoryObservable.createNonRecursive(directory);
+    final Observable<WatchEvent<?>> observable = PathObservables.watchNonRecursive(directory);
     final List<WatchEvent<?>> events = new LinkedList<>();
 
     observable.subscribeOn(Schedulers.io()).subscribe(events::add);
