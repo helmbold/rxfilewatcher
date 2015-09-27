@@ -41,14 +41,14 @@ public final class DirectoryObservable {
 
   private static class ObservableFactory {
 
-    // TODO use file system of the given path
-    private final WatchService watcher = FileSystems.getDefault().newWatchService();
-
+    private final WatchService watcher;
     private final Map<WatchKey, Path> directoriesByKey = new HashMap<>();
     private final Path directory;
     private final boolean recursive;
 
     private ObservableFactory(final Path directory, final boolean recursive) throws IOException {
+      final FileSystem fileSystem = directory.getFileSystem();
+      watcher = fileSystem.newWatchService();
       this.directory = directory;
       this.recursive = recursive;
     }
