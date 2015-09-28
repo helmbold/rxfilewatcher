@@ -3,7 +3,7 @@
 Usage
 -------
 
-The following example creates an observable that watches the given directory and all its subdirectories for file system events. Directories which are created later are watched, too. Each event will be emitted as a [WatchEvent](https://docs.oracle.com/javase/8/docs/api/java/nio/file/WatchEvent.html) and will be printed.
+The following example creates an observable that watches the given directory and all its subdirectories for file system events. Directories which are created later are watched, too. Each event will be emitted as a [WatchEvent](https://docs.oracle.com/javase/8/docs/api/java/nio/file/WatchEvent.html).
 
 ```java
 PathObservables
