@@ -1,9 +1,9 @@
 package de.helmbold.rxfilewatcher;
 
+import io.reactivex.Observable;
+import io.reactivex.schedulers.Schedulers;
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.Test;
-import rx.Observable;
-import rx.schedulers.Schedulers;
 
 import java.io.IOException;
 import java.nio.file.Files;
