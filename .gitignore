@@ -1,3 +1,9 @@
 target
 *.iml
 .idea
+/out
+/build
+/.gradle*
+/gradlew*
+gradle/wrapper/gradle-wrapper.jar
+gradle/wrapper/gradle-wrapper.properties
