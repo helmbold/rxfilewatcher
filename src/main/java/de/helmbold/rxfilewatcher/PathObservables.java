@@ -77,12 +77,14 @@ public final class PathObservables {
           subscriber.onError(exception);
           errorFree = false;
         }
-        while (errorFree) {
+        while (errorFree && !subscriber.isDisposed()) {
           final WatchKey key;
           try {
             key = watcher.take();
           } catch (InterruptedException exception) {
-            subscriber.onError(exception);
+            if (!subscriber.isDisposed()) {
+              subscriber.onError(exception);
+            }
             errorFree = false;
             break;
           }
