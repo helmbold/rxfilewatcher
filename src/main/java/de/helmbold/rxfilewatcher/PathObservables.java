@@ -1,17 +1,26 @@
 package de.helmbold.rxfilewatcher;
 
-import rx.Observable;
-import rx.Subscriber;
 
+import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
+
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.WatchEvent;
 import java.nio.file.WatchEvent.Kind;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Map;
-
-import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
-import static java.nio.file.StandardWatchEventKinds.*;
 
 public final class PathObservables {
 
@@ -68,12 +77,14 @@ public final class PathObservables {
           subscriber.onError(exception);
           errorFree = false;
         }
-        while (errorFree) {
+        while (errorFree && !subscriber.isDisposed()) {
           final WatchKey key;
           try {
             key = watcher.take();
           } catch (InterruptedException exception) {
-            subscriber.onError(exception);
+            if (!subscriber.isDisposed()) {
+              subscriber.onError(exception);
+            }
             errorFree = false;
             break;
           }
@@ -93,7 +104,7 @@ public final class PathObservables {
           }
         }
         if (errorFree) {
-          subscriber.onCompleted();
+          subscriber.onComplete();
         }
       });
     }
@@ -119,7 +130,7 @@ public final class PathObservables {
 
     // register newly created directory to watching in recursive mode
     private void registerNewDirectory(
-        final Subscriber<? super WatchEvent<?>> subscriber,
+        final ObservableEmitter<WatchEvent<?>> subscriber,
         final Path dir,
         final WatchEvent<?> event) {
       final Kind<?> kind = event.kind();

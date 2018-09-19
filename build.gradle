@@ -1,0 +1,23 @@
+apply plugin: 'java-library'
+apply plugin: 'maven'
+
+group = 'de.helmbold'
+description = """fileConvenient file watcher with an RxJava interface, based on JDK WatchService watcher"""
+
+sourceCompatibility = 1.8
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+repositories {
+    maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
+    mavenCentral()
+    maven { url "http://repo1.maven.org/maven2/" }
+}
+
+dependencies {
+    compile 'io.reactivex.rxjava2:rxjava:2.2.2'
+    testCompile group: 'org.testng', name: 'testng', version: '6.9.4'
+    testCompile group: 'org.assertj', name: 'assertj-core', version: '3.0.0'
+    testCompile group: 'commons-io', name: 'commons-io', version: '2.4'
+}
