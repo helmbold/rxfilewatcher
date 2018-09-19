@@ -4,7 +4,7 @@
 
 # What's New?
 
-1. `Sep 12, 2018` Uploaded to Rx2, fix some bugs.
+1. `Sep 12, 2018` Updated to Rx2, fix some bugs.
 2. `Jul 18, 2015` Initial project, first release by [Helmbold](https://github.com/helmbold).
 
 
