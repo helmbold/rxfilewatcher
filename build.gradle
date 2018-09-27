@@ -1,5 +1,8 @@
-apply plugin: 'java-library'
-apply plugin: 'maven'
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'signing'
+}
 
 group = 'de.helmbold'
 version = "1.0.0"
@@ -19,4 +22,61 @@ dependencies {
     testImplementation group: 'org.testng', name: 'testng', version: '6.14.3'
     testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.11.1'
     testImplementation group: 'commons-io', name: 'commons-io', version: '2.6'
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allJava
+}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            artifact sourcesJar
+            artifact javadocJar
+
+            pom {
+                name = "RxFileWatcher"
+                description = "Observe directories with RxJava based on JDK WatchService."
+                url = "https://github.com/helmbold/rxfilewatcher"
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'christian.helmbold'
+                        name = 'Christian Helmbold'
+                    }
+                }
+                scm {
+                    url = 'https://github.com/helmbold/rxfilewatcher.git'
+                    connection = 'https://github.com/helmbold/rxfilewatcher.git'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            credentials {
+                username = sonatypeUser
+                password = sonatypePassword
+            }
+            url = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+        }
+    }
+}
+
+signing {
+    useGpgCmd()
+    sign publishing.publications.mavenJava
 }

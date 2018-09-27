@@ -30,4 +30,23 @@ That's it!
 
 See [RxJava Documentation](https://github.com/ReactiveX/RxJava/wiki) for more information, e. g. how you can filter certain types of events.
 
-`- eof -`
+# Get it
+
+Available on Maven Central.
+
+## Maven
+
+```xml
+<dependency>
+  <groupId>de.helmbold</groupId>
+  <artifactId>rxfilewatcher</artifactId>
+  <version>1.0.0</version>
+</dependency>
+```
+
+## Gradle
+
+```kotlin
+implementation('de.helmbold:rxfilewatcher:1.0.0')
+```
+
