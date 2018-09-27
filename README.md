@@ -46,7 +46,7 @@ Available on Maven Central.
 
 ## Gradle
 
-```kotlin
+```groovy
 implementation('de.helmbold:rxfilewatcher:1.0.0')
 ```
 
