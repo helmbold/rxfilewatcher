@@ -43,23 +43,20 @@ public final class PathObservables {
    * Creates an observable that watches the given path but not its subdirectories.
    * @param path Path to be watched
    * @return Observable that emits an event for each filesystem event.
-   * @throws IOException
    */
-  public static Observable<WatchEvent<?>> watchNonRecursive(final Path path) throws IOException {
+  public static Observable<WatchEvent<?>> watchNonRecursive(final Path path) {
     final boolean recursive = false;
     return new ObservableFactory(path, recursive).create();
   }
 
   private static class ObservableFactory {
 
-    private final WatchService watcher;
+
     private final Map<WatchKey, Path> directoriesByKey = new HashMap<>();
     private final Path directory;
     private final boolean recursive;
 
-    private ObservableFactory(final Path path, final boolean recursive) throws IOException {
-      final FileSystem fileSystem = path.getFileSystem();
-      watcher = fileSystem.newWatchService();
+    private ObservableFactory(final Path path, final boolean recursive) {
       directory = path;
       this.recursive = recursive;
     }
@@ -67,42 +64,45 @@ public final class PathObservables {
     private Observable<WatchEvent<?>> create() {
       return Observable.create(subscriber -> {
         boolean errorFree = true;
-        try {
-          if (recursive) {
-            registerAll(directory);
-          } else {
-            register(directory);
-          }
-        } catch (IOException exception) {
-          subscriber.onError(exception);
-          errorFree = false;
-        }
-        while (errorFree && !subscriber.isDisposed()) {
-          final WatchKey key;
+        try(WatchService watcher = directory.getFileSystem().newWatchService()) {
           try {
-            key = watcher.take();
-          } catch (InterruptedException exception) {
-            if (!subscriber.isDisposed()) {
-              subscriber.onError(exception);
+            if (recursive) {
+              registerAll(directory, watcher);
+            } else {
+              register(directory, watcher);
             }
+          } catch (IOException exception) {
+            subscriber.onError(exception);
             errorFree = false;
-            break;
           }
-          final Path dir = directoriesByKey.get(key);
-          for (final WatchEvent<?> event : key.pollEvents()) {
-            subscriber.onNext(event);
-            registerNewDirectory(subscriber, dir, event);
-          }
-          // reset key and remove from set if directory is no longer accessible
-          boolean valid = key.reset();
-          if (!valid) {
-            directoriesByKey.remove(key);
-            // nothing to be watched
-            if (directoriesByKey.isEmpty()) {
+          while (errorFree && !subscriber.isDisposed()) {
+            final WatchKey key;
+            try {
+              key = watcher.take();
+            } catch (InterruptedException exception) {
+              if (!subscriber.isDisposed()) {
+                subscriber.onError(exception);
+              }
+              errorFree = false;
               break;
             }
+            final Path dir = directoriesByKey.get(key);
+            for (final WatchEvent<?> event : key.pollEvents()) {
+              subscriber.onNext(event);
+              registerNewDirectory(subscriber, dir, watcher, event);
+            }
+            // reset key and remove from set if directory is no longer accessible
+            boolean valid = key.reset();
+            if (!valid) {
+              directoriesByKey.remove(key);
+              // nothing to be watched
+              if (directoriesByKey.isEmpty()) {
+                break;
+              }
+            }
           }
         }
+
         if (errorFree) {
           subscriber.onComplete();
         }
@@ -112,27 +112,28 @@ public final class PathObservables {
     /**
      * Register the rootDirectory, and all its sub-directories.
      */
-    private void registerAll(final Path rootDirectory) throws IOException {
+    private void registerAll(final Path rootDirectory, final WatchService watcher) throws IOException {
       Files.walkFileTree(rootDirectory, new SimpleFileVisitor<Path>() {
         @Override
         public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs)
-            throws IOException {
-          register(dir);
+                throws IOException {
+          register(dir, watcher);
           return FileVisitResult.CONTINUE;
         }
       });
     }
 
-    private void register(final Path dir) throws IOException {
+    private void register(final Path dir, final WatchService watcher) throws IOException {
       final WatchKey key = dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
       directoriesByKey.put(key, dir);
     }
 
     // register newly created directory to watching in recursive mode
     private void registerNewDirectory(
-        final ObservableEmitter<WatchEvent<?>> subscriber,
-        final Path dir,
-        final WatchEvent<?> event) {
+            final ObservableEmitter<WatchEvent<?>> subscriber,
+            final Path dir,
+            final WatchService watcher,
+            final WatchEvent<?> event) {
       final Kind<?> kind = event.kind();
       if (recursive && kind.equals(ENTRY_CREATE)) {
         // Context for directory entry event is the file name of entry
@@ -142,7 +143,7 @@ public final class PathObservables {
         final Path child = dir.resolve(name);
         try {
           if (Files.isDirectory(child, NOFOLLOW_LINKS)) {
-            registerAll(child);
+            registerAll(child, watcher);
           }
         } catch (final IOException exception) {
           subscriber.onError(exception);
@@ -151,3 +152,4 @@ public final class PathObservables {
     }
   }
 }
+

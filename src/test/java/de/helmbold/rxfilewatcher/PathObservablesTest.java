@@ -1,6 +1,7 @@
 package de.helmbold.rxfilewatcher;
 
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.Test;
@@ -14,6 +15,7 @@ import java.nio.file.WatchEvent;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -84,4 +86,34 @@ public final class PathObservablesTest {
     FileUtils.deleteDirectory(directory.toFile());
   }
 
+
+  /**
+   * Test the fix for https://github.com/helmbold/rxfilewatcher/issues/8
+   *
+   * Previously, the PathObservables.ObservableFactory did not call WatchService.close()
+   * before completing its subscription. This caused WatchService instances to leak, which in turn
+   * could eventually cause the OS to enforce its limits on the leaky process.
+   */
+  @Test(timeOut = 45000)
+  public void shouldCloseWatchService() throws IOException {
+    final Path directory = Files.createTempDirectory(null);
+    final byte[] empty = new byte[0];
+    final int cycles = 768; // 768 = largest known default watch limit (windows) * 1.5
+    // due to a small time gap between subscription and watcher starting to publish events,
+    // a small delay is necessary in order to reliably exercise the observable's lifecycle
+    final int writeDelayMs = 20;
+
+    for (int i = 0; i < cycles; i++) {
+      int finalI = i;
+      final WatchEvent<?> event = PathObservables.watchNonRecursive(directory)
+              .doOnSubscribe((disposable) -> Single.just(directory.resolve(String.valueOf(finalI)))
+                      .delay(writeDelayMs, TimeUnit.MILLISECONDS)
+                      .subscribe(noise -> Files.write(noise, empty)))
+              .blockingFirst();
+      assertThat(event).isNotNull();
+      System.out.println(i);
+    }
+
+    FileUtils.deleteDirectory(directory.toFile());
+  }
 }
